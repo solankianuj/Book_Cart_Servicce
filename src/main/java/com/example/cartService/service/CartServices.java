@@ -58,8 +58,23 @@ public class CartServices implements ICartServices{
     }
 
     @Override
-    public Response updateQuantity(String token,long bookId, int quantity) {
-        return null;
+    public Response updateQuantity(String token,long bookId,long cartId, int quantity) {
+        if (isUserPresent(token)!=null) {
+
+            Optional<CartModel> cartModel = cartRepository.findById(cartId);
+            if (cartModel.isPresent()) {
+                if (quantity > cartModel.get().getQuantity()) {
+                    addQuantity(bookId, cartId, quantity);
+                    cartRepository.save(cartModel.get());
+                } else {
+                    minusQuantity(bookId, quantity, cartId);
+                    cartRepository.save(cartModel.get());
+                }
+                return new Response("quantity update successfully", 200, cartModel.get());
+            }
+            throw new CartNoteFound(400,"Cart Not Found !");
+        }
+        throw new CartNoteFound(400,"User Not Found !");
     }
 
     @Override
@@ -70,6 +85,39 @@ public class CartServices implements ICartServices{
             return new Response("Fetching all cart of user", 200, cartModelList);
         }
         throw new CartNoteFound(400,"User Not Found !");
+    }
+
+    @Override
+    public CartModel getCart(String token, long cartId) {
+        if (isUserPresent(token) != null) {
+            Optional<CartModel> cartModel=cartRepository.findById(cartId);
+            if (cartModel.isPresent()){
+                return cartModel.get();
+            }
+            throw new CartNoteFound(400,"Cart Not Found !");
+        }
+        throw new CartNoteFound(400,"User Not Found !");
+    }
+
+    public BookModel addQuantity(long bookId,long cartId,int quantity){
+        Optional<CartModel> cartModel = cartRepository.findById(cartId);
+            int quantity2=quantity-cartModel.get().getQuantity();
+            int newQuantity = isBookPresent(bookId).getQuantity() - quantity2;
+            cartModel.get().setQuantity(quantity);
+            double price=quantity*isBookPresent(bookId).getPrice();
+            cartModel.get().setTotalPrice(price);
+            return  setBookQuantity(bookId, newQuantity);
+
+    }
+
+    public BookModel minusQuantity(long bookId,int quantity,long cartId){
+        Optional<CartModel> cartModel = cartRepository.findById(cartId);
+            int quantity2=cartModel.get().getQuantity()-quantity;
+            int newQuantity = isBookPresent(bookId).getQuantity() + quantity2;
+            cartModel.get().setQuantity(quantity);
+            double price=quantity*isBookPresent(bookId).getPrice();
+            cartModel.get().setTotalPrice(price);
+            return  setBookQuantity(bookId, newQuantity);
     }
 
     public BookStoreUser isUserPresent(String token){
