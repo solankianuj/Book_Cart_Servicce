@@ -7,12 +7,16 @@ import com.example.cartService.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
+/**
+ * Purpose-implementation of cart service operations APIs logic.
+ * @author anuj solanki
+ * @date 20/09/2022
+ * @version 1.0
+ */
 @Service
 public class CartServices implements ICartServices{
 
@@ -24,6 +28,13 @@ public class CartServices implements ICartServices{
     @Autowired
     CartRepository cartRepository;
 
+    /**
+     * purpose-Logic implementation of API to add to cart.
+     * @param token
+     * @param bookId
+     * @param quantity
+     * @return
+     */
     @Override
     public Response addToCart(String token, long bookId,int quantity) {
         if (isUserPresent(token)!=null){
@@ -42,6 +53,13 @@ public class CartServices implements ICartServices{
         throw new CartNoteFound(400,"User Not Found !");
     }
 
+    /**
+     * purpose-Remove from cart Api logic implementation.
+     * @param token
+     * @param cartId
+     * @param bookId
+     * @return
+     */
     @Override
     public Response removeCart (String token,long cartId,long bookId){
         if (isUserPresent(token)!=null) {
@@ -57,6 +75,14 @@ public class CartServices implements ICartServices{
         throw new CartNoteFound(400,"User Not Found !");
     }
 
+    /**
+     * purpose -Change book quantity in cart Api logic implementation.
+     * @param token
+     * @param bookId
+     * @param cartId
+     * @param quantity
+     * @return
+     */
     @Override
     public Response updateQuantity(String token,long bookId,long cartId, int quantity) {
         if (isUserPresent(token)!=null) {
@@ -70,13 +96,18 @@ public class CartServices implements ICartServices{
                     minusQuantity(bookId, quantity, cartId);
                     cartRepository.save(cartModel.get());
                 }
-                return new Response("quantity update successfully", 200, cartModel.get());
+                return new Response("Quantity update successfully", 200, cartModel.get());
             }
             throw new CartNoteFound(400,"Cart Not Found !");
         }
         throw new CartNoteFound(400,"User Not Found !");
     }
 
+    /**
+     * purpose- Fetch user's cart Api logic implementation.
+     * @param token
+     * @return
+     */
     @Override
     public Response getAllCartOfUser(String token) {
         if (isUserPresent(token) != null) {
@@ -87,6 +118,12 @@ public class CartServices implements ICartServices{
         throw new CartNoteFound(400,"User Not Found !");
     }
 
+    /**
+     * purpose - Fetch cart Api logic implementation.
+     * @param token
+     * @param cartId
+     * @return
+     */
     @Override
     public CartModel getCart(String token, long cartId) {
         if (isUserPresent(token) != null) {
@@ -99,6 +136,14 @@ public class CartServices implements ICartServices{
         throw new CartNoteFound(400,"User Not Found !");
     }
 
+    /**
+     * purpose- add book quantity in cart logic implementation.
+     * @param bookId
+     * @param cartId
+     * @param quantity
+     * @return
+     */
+
     public BookModel addQuantity(long bookId,long cartId,int quantity){
         Optional<CartModel> cartModel = cartRepository.findById(cartId);
             int quantity2=quantity-cartModel.get().getQuantity();
@@ -110,6 +155,13 @@ public class CartServices implements ICartServices{
 
     }
 
+    /**
+     * purpose- Minus book quantity in cart logic implementation.
+     * @param bookId
+     * @param quantity
+     * @param cartId
+     * @return
+     */
     public BookModel minusQuantity(long bookId,int quantity,long cartId){
         Optional<CartModel> cartModel = cartRepository.findById(cartId);
             int quantity2=cartModel.get().getQuantity()-quantity;
@@ -121,12 +173,12 @@ public class CartServices implements ICartServices{
     }
 
     public BookStoreUser isUserPresent(String token){
-        return restTemplate.getForObject("http://localhost:9091/user/verify/"+token,BookStoreUser.class);
+        return restTemplate.getForObject("http://BOOK-STORE-USER-SERVICE/user/verify/"+token,BookStoreUser.class);
     }
     public BookModel isBookPresent(long bookId){
-        return restTemplate.getForObject("http://localhost:9092/book/getBook/"+bookId,BookModel.class);
+        return restTemplate.getForObject("http://BOOK-SERVICE/book/getBook/"+bookId,BookModel.class);
     }
     public BookModel setBookQuantity(long bookId,int quantity){
-        return restTemplate.getForObject("http://localhost:9092/book/changeBookQuantity/{bookId}/{quantity}",BookModel.class,bookId,quantity);
+        return restTemplate.getForObject("http://BOOK-SERVICE/book/changeBookQuantity/{bookId}/{quantity}",BookModel.class,bookId,quantity);
     }
 }
